@@ -6,10 +6,63 @@ export default function Home() {
   const [inputA, setInputA] = useState("");
   const [inputB, setInputB] = useState("");
   const [output, setOutput] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const generateOutput = () => {
-    // Dummy logic — you can replace with your own
-    setOutput(`Combined Output:\n\n${inputA}\n\n---\n\n${inputB}`);
+  const generateOutput = async () => {
+    setLoading(true);
+    setOutput("");
+
+    try {
+      const res = await fetch("/api/groq", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ latex: inputA, jobDescription: inputB }),
+      });
+
+      if (!res.body) {
+        throw new Error("Streaming not supported");
+      }
+
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let result = "";
+      let buffer = "";
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        buffer = buffer.replace(/<think>[\s\S]*?<\/think>/gi, (match) => {
+          console.log("Filtered Explanation:", match);
+          return "";
+        });
+
+        const lastOpenIndex = buffer.lastIndexOf("<think>");
+        const lastCloseIndex = buffer.lastIndexOf("</think>");
+
+        if (lastOpenIndex > lastCloseIndex) {
+          result += buffer.slice(0, lastOpenIndex);
+          buffer = buffer.slice(lastOpenIndex);
+        } else {
+          result += buffer;
+          buffer = "";
+        }
+      }
+
+      result = result.replace(/^```latex\s*|```$/gim, "");
+
+      setOutput(result);
+    } catch (error) {
+      if (error instanceof Error) {
+        setOutput(`Error: ${error.message}`);
+      } else {
+        setOutput("An unknown error occurred.");
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   const copyToClipboard = () => {
@@ -18,10 +71,7 @@ export default function Home() {
   };
 
   return (
-    <div
-      className="flex flex-col gap-10 min-h-screen bg-[#005582]"
-      style={{ padding: "2rem", fontFamily: "Arial" }}
-    >
+    <div className="flex flex-col gap-10 min-h-screen bg-[#005582]">
       <h1
         style={{
           textAlign: "center",
@@ -73,7 +123,13 @@ export default function Home() {
         <p className="text-lg font-semibold text-accent-100 mb-2 text-center">
           Generated Latex
         </p>
+        {loading && (
+          <div className="text-white text-center font-semibold">
+            Generating...
+          </div>
+        )}
         <textarea
+          id="GeneratedOutput"
           className="w-full h-104 p-4 border border-gray-300 rounded-md resize-none bg-white shadow-md text-gray-700"
           readOnly
           rows={6}

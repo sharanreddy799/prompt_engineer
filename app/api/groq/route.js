@@ -21,32 +21,45 @@ export async function POST(req) {
         {
           role: "user",
           content: `
-You are an AI that expertly revises resumes in LaTeX format based on a job description. Using the given LaTeX resume template, produce a tailored one-page resume in LaTeX that is optimized for the target job. Follow these requirements exactly:
+You are an expert AI specialized in revising LaTeX resumes according to provided job descriptions. Carefully analyze the LaTeX resume template and the provided job description, then generate a tailored, ATS-friendly, one-page LaTeX resume optimized specifically for the target job.
 
-1. Analyze the Job Description for Experience Level:
-   Determine from the job description whether the role is meant for a new graduate/entry-level candidate or an experienced professional (mid-level/senior). Look for clues like required years of experience or terms like “Senior”, “Lead”, “0-1 years”, etc.
+Precisely adhere to these instructions:
+	1.	Identify and Preserve Commented-out Sections:
+Detect any commented-out areas (lines starting with %) in the provided LaTeX template and ensure these remain commented out exactly as in the original. Do not uncomment or modify them.
+	2.	Analyze Job Description for Experience Level:
+Determine if the job description targets an entry-level candidate (e.g., terms like “New Grad,” “0-1 years,” “Junior”) or an experienced professional (e.g., terms like “Senior,” “Lead,” “3+ years”). Clearly infer the experience level required.
+	3.	Dynamic Resume Section Ordering:
+Reorder entire resume sections based on the inferred experience level:
+	•	Entry-level roles:
+	1.	Education
+	2.	Projects
+	3.	Experience
+	4.	Skills
+	•	Experienced roles:
+	1.	Experience
+	2.	Projects
+	3.	Education
+	4.	Skills
+Only reorder entire sections; do not alter internal LaTeX structures or formatting within sections.
+	4.	Maintain LaTeX Structure and Formatting:
+	•	Strictly retain all original LaTeX formatting and syntax, including:
+	•	All curly braces {}, exactly as given.
+	•	All section headings (e.g., \section{}, \subsection{}).
+	•	All indentation, spacing, bullet points (\item commands), and line breaks exactly as in the template.
+	•	Make sure no extraneous spaces or line breaks are introduced.
+	5.	Tailor Content Precisely to Job Description:
+	•	Experience Section: Update job titles, bullet points, and phrasing directly matching terminology from the provided job description.
+	•	Projects Section: Highlight and emphasize projects most relevant to the target job, integrating specific skills and keywords from the job description.
+	•	Education Section:
+	•	For entry-level: Include relevant coursework and academic honors.
+	•	For experienced: Keep concise, removing unnecessary academic details.
+	6.	ATS-Friendly Keywords Integration:
+Insert exact skills, keywords, and technologies from the job description naturally and meaningfully throughout resume sections for ATS optimization.
+	7.	Professionalism, Consistency, and Accuracy:
+Ensure content remains professional, truthful, and strictly relevant to the job posting.
 
-2. Dynamic Section Ordering:
-   Reorder the sections of the resume based on the inferred experience level:
-   - For entry-level roles: Education section first, followed by Projects, then Experience, then Skills.
-   - For experienced roles: Experience section first, followed by Projects, then Education, then Skills.
-
-3. Preserve LaTeX Structure:
-   Do not modify the fundamental LaTeX structure or syntax of the template. Maintain all section headings and commands (e.g. \\section{...}, etc.). Reorder entire sections and update their contents, but ensure valid LaTeX output.
-
-4. Tailor Content to the Job Description:
-   - Experience: Adjust job titles and bullet points of recent roles to reflect the job posting language.
-   - Projects: Emphasize industry-relevant projects using terms from the job description.
-   - Education: For entry-level, include relevant coursework and honors; for experienced roles, keep concise.
-
-5. ATS-Friendly Keywords:
-   Integrate keywords and skills from the job description throughout the resume. Use exact phrasing where applicable for ATS compatibility.
-
-6. Consistency and Relevance:
-   Keep the tone professional. Include only relevant and truthful content.
-
-7. Output Requirements:
-   Return only the complete LaTeX resume document. Do not include explanations, markdown, or commentary. Ensure the output is not truncated and is valid LaTeX.
+Output Requirements:
+Return only the finalized, complete LaTeX resume document. Do not include explanations, markdown, or commentary. Verify that the output is valid LaTeX and fully intact (no truncation).
 
 LaTeX Resume:
 ${latex}

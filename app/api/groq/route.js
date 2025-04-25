@@ -21,6 +21,11 @@ export async function POST(req) {
         {
           role: "user",
           content: `
+First Line Output Requirement:
+- Before generating the LaTeX resume, output a single line containing only the extracted Company Name and Role Title based on the provided Job Description.
+- Format: Company: [Company Name], Role: [Role Title]
+- After this line, output the LaTeX resume as per the remaining instructions.
+
 You are an expert AI specialized in revising LaTeX resumes according to provided job descriptions. Carefully analyze the LaTeX resume template and the provided job description, then generate a tailored, ATS-friendly, one-page LaTeX resume optimized specifically for the target job.
 
 Precisely adhere to these instructions:

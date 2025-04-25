@@ -52,17 +52,35 @@ export default function Home() {
         }
       }
 
-      result = result.replace(/^```latex\s*|```$/gim, "");
+      result = result.replace(/^```latex\s*|```$/gim, "").trim();
 
-      setOutput(result);
+      // Split result into first line and the rest
+      const [firstLineRaw, ...latexLines] = result.split("\n");
+      const firstLine = firstLineRaw.trim();
 
-      try {
-        await axios.post("/api/save", {
-          jobDescription: inputB,
-          latexOutput: result,
-        });
-      } catch (saveError) {
-        console.error("Failed to save to database:", saveError);
+      // Extract company and role from the trimmed first line
+      const match = firstLine.match(/Company:\s*(.*?),\s*Role:\s*(.*)/);
+      const company = match ? match[1].trim() : "";
+      const role = match ? match[2].trim() : "";
+
+      if (company && role) {
+        // Remove first line (containing company/role) from LaTeX output, trim rest
+        const latexContent = latexLines.join("\n").trim();
+        setOutput(latexContent);
+
+        try {
+          await axios.post("/api/save", {
+            jobDescription: `Company: ${company}, Role: ${role}`,
+            latexOutput: latexContent,
+          });
+        } catch (saveError) {
+          console.error("Failed to save to database:", saveError);
+        }
+      } else {
+        console.error("Could not extract company and role properly!");
+        setOutput(
+          "Error: Failed to extract company and role. Check input format."
+        );
       }
     } catch (error) {
       if (error instanceof Error) {

@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import axios from "axios";
 
 export default function Home() {
   const [inputA, setInputA] = useState("");
@@ -54,6 +55,15 @@ export default function Home() {
       result = result.replace(/^```latex\s*|```$/gim, "");
 
       setOutput(result);
+
+      try {
+        await axios.post("/api/save", {
+          jobDescription: inputB,
+          latexOutput: result,
+        });
+      } catch (saveError) {
+        console.error("Failed to save to database:", saveError);
+      }
     } catch (error) {
       if (error instanceof Error) {
         setOutput(`Error: ${error.message}`);

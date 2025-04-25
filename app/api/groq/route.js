@@ -37,8 +37,8 @@ Determine if the job description targets an entry-level candidate (e.g., terms l
 Reorder entire resume sections based on the inferred experience level:
 	•	Entry-level roles:
 	1.	Education
-	2.	Projects
-	3.	Experience
+	2.	Experience 
+	3.	Projects
 	4.	Skills
 	•	Experienced roles:
 	1.	Experience

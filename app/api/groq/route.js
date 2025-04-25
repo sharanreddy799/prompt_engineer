@@ -37,8 +37,8 @@ Determine if the job description targets an entry-level candidate (e.g., terms l
 Reorder entire resume sections based on the inferred experience level:
 	•	Entry-level roles:
 	1.	Education
-	2.	Projects
-	3.	Experience
+	2.	Experience 
+	3.	Projects
 	4.	Skills
 	•	Experienced roles:
 	1.	Experience
@@ -58,7 +58,7 @@ Only reorder entire sections; do not alter internal LaTeX structures or formatti
 	•	Education Section:
 	•	For entry-level: Include relevant coursework and academic honors.
 	•	For experienced: Keep concise, removing unnecessary academic details.
-  • Add Quantifiable Results to the points apart from keeping them short and simple
+  	• 	Add Quantifiable Results to the points apart from keeping them short and simple for all types of roles.
 	6.	ATS-Friendly Keywords Integration:
 Insert exact skills, keywords, and technologies from the job description naturally and meaningfully throughout resume sections for ATS optimization.
 	7.	Professionalism, Consistency, and Accuracy:

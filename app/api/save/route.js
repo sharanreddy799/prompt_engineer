@@ -12,22 +12,23 @@ const pool = new Pool({
 // Create the table if it does not exist
 async function ensureTableExists() {
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS saved_resumes (
-      id SERIAL PRIMARY KEY,
+    CREATE TABLE IF NOT EXISTS job_hunt (
       job_description TEXT NOT NULL,
+      company TEXT NOT NULL,
       latex_output TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      PRIMARY KEY (job_description, company)
     )
   `);
 }
 
 export async function POST(req) {
   try {
-    const { jobDescription, latexOutput } = await req.json();
+    const { jobDescription, company, latexOutput } = await req.json();
 
-    if (!jobDescription || !latexOutput) {
+    if (!jobDescription || !company || !latexOutput) {
       return NextResponse.json(
-        { error: "Missing job description or LaTeX output" },
+        { error: "Missing job description, company, or LaTeX output" },
         { status: 400 }
       );
     }
@@ -35,8 +36,12 @@ export async function POST(req) {
     await ensureTableExists();
 
     await pool.query(
-      "INSERT INTO saved_resumes (job_description, latex_output) VALUES ($1, $2)",
-      [jobDescription, latexOutput]
+      `INSERT INTO job_hunt (job_description, company, latex_output)
+       VALUES ($1, $2, $3)
+       ON CONFLICT (job_description, company)
+       DO UPDATE SET latex_output = EXCLUDED.latex_output,
+                     created_at = CURRENT_TIMESTAMP`,
+      [jobDescription, company, latexOutput]
     );
 
     return NextResponse.json({ message: "Saved successfully" });

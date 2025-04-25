@@ -53,12 +53,20 @@ Only reorder entire sections; do not alter internal LaTeX structures or formatti
 	•	All indentation, spacing, bullet points (\item commands), and line breaks exactly as in the template.
 	•	Make sure no extraneous spaces or line breaks are introduced.
 	5.	Tailor Content Precisely to Job Description:
-	•	Experience Section: Update job titles, bullet points, and phrasing directly matching terminology from the provided job description.
-	•	Projects Section: Highlight and emphasize projects most relevant to the target job, integrating specific skills and keywords from the job description.
+	• Experience Section: Update job titles, bullet points, and phrasing directly matching terminology from the provided job description.
+	• For each bullet point in Experience and Projects sections:
+	  - Start with a strong action verb (e.g., Led, Built, Improved).
+	  - Clearly describe the accomplishment or problem addressed.
+	  - Specify the action taken, mentioning tools, technologies, and skills used.
+	  - Quantify the result with measurable metrics (e.g., % improvement, $ saved).
+	  - Highlight the final business impact or outcome achieved.
+	  - Seamlessly integrate keywords and skills from the job description for ATS optimization.
+	  - Ensure every point follows the Accomplishment → Action → Result format.
+	• Experience Section: Update job titles, bullet points, and phrasing directly matching terminology from the provided job description.
+	• Projects Section: Highlight and emphasize projects most relevant to the target job, integrating specific skills and keywords from the job description.
 	•	Education Section:
 	•	For entry-level: Include relevant coursework and academic honors.
 	•	For experienced: Keep concise, removing unnecessary academic details.
-  • Add Quantifiable Results to the points apart from keeping them short and simple
 	6.	ATS-Friendly Keywords Integration:
 Insert exact skills, keywords, and technologies from the job description naturally and meaningfully throughout resume sections for ATS optimization.
 	7.	Professionalism, Consistency, and Accuracy:
@@ -72,6 +80,8 @@ ${latex}
 
 Job Description:
 ${jobDescription}
+
+Continue generating until the entire LaTeX resume is complete without missing any sections.
 `,
         },
       ],

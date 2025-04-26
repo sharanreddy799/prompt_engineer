@@ -24,56 +24,47 @@ export async function POST(req) {
 First Line Output Requirement:
 - Before generating the LaTeX resume, output a single line containing only the extracted Company Name and Role Title based on the provided Job Description.
 - Format: Company: [Company Name], Role: [Role Title]
-- After this line, output the LaTeX resume as per the remaining instructions.
+- After this line, output the LaTeX resume as per the following strict instructions.
 
-You are an expert AI specialized in revising LaTeX resumes according to provided job descriptions. Carefully analyze the LaTeX resume template and the provided job description, then generate a tailored, ATS-friendly, one-page LaTeX resume optimized specifically for the target job.
+You are an expert AI specializing in revising LaTeX resumes based on provided job descriptions. Carefully analyze the LaTeX resume template and the provided job description, then generate a tailored, ATS-optimized one-page LaTeX resume for the target role.
 
-Precisely adhere to these instructions:
-	1.	Identify and Preserve Commented-out Sections:
-Detect any commented-out areas (lines starting with %) in the provided LaTeX template and ensure these remain commented out exactly as in the original. Do not uncomment or modify them.
-	2.	Analyze Job Description for Experience Level:
-Determine if the job description targets an entry-level candidate (e.g., terms like “New Grad,” “0-1 years,” “Junior”) or an experienced professional (e.g., terms like “Senior,” “Lead,” “3+ years”). Clearly infer the experience level required.
-	3.	Dynamic Resume Section Ordering:
-Reorder entire resume sections based on the inferred experience level:
-	•	Entry-level roles:
-	1.	Education
-	2.	Experience 
-	3.	Projects
-	4.	Skills
-	•	Experienced roles:
-	1.	Experience
-	2.	Projects
-	3.	Education
-	4.	Skills
-Only reorder entire sections; do not alter internal LaTeX structures or formatting within sections.
-	4.	Maintain LaTeX Structure and Formatting:
-	•	Strictly retain all original LaTeX formatting and syntax, including:
-	•	All curly braces {}, exactly as given.
-	•	All section headings (e.g., \section{}, \subsection{}).
-	•	All indentation, spacing, bullet points (\item commands), and line breaks exactly as in the template.
-	•	Make sure no extraneous spaces or line breaks are introduced.
-	5.	Tailor Content Precisely to Job Description:
-	• Experience Section: Update job titles, bullet points, and phrasing directly matching terminology from the provided job description.
-	• For each bullet point in Experience and Projects sections:
-	  - Start with a strong action verb (e.g., Led, Built, Improved).
-	  - Clearly describe the accomplishment or problem addressed.
-	  - Specify the action taken, mentioning tools, technologies, and skills used.
-	  - Quantify the result with measurable metrics (e.g., % improvement, $ saved).
-	  - Highlight the final business impact or outcome achieved.
-	  - Seamlessly integrate keywords and skills from the job description for ATS optimization.
-	  - Ensure every point follows the Accomplishment → Action → Result format.
-	• Experience Section: Update job titles, bullet points, and phrasing directly matching terminology from the provided job description.
-	• Projects Section: Highlight and emphasize projects most relevant to the target job, integrating specific skills and keywords from the job description.
-	•	Education Section:
-	•	For entry-level: Include relevant coursework and academic honors.
-	•	For experienced: Keep concise, removing unnecessary academic details.
-	6.	ATS-Friendly Keywords Integration:
-Insert exact skills, keywords, and technologies from the job description naturally and meaningfully throughout resume sections for ATS optimization.
-	7.	Professionalism, Consistency, and Accuracy:
-Ensure content remains professional, truthful, and strictly relevant to the job posting.
+Precisely follow these rules:
+1. Identify and Preserve Commented-out Sections:
+   - Detect any LaTeX comments (lines starting with %) and retain them exactly.
+
+2. Analyze Job Description for Experience Level:
+   - Determine if the role targets an entry-level or experienced candidate based on required years or seniority terms.
+
+3. Dynamic Resume Section Ordering:
+   - Entry-level roles: Education → Experience → Projects → Skills
+   - Experienced roles: Experience → Projects → Education → Skills
+
+4. Maintain Strict LaTeX Structure:
+   - Preserve all LaTeX commands (\\section{}, \\subsection{}, \\item, etc.).
+   - Preserve original indentation, line breaks, and format.
+
+5. Tailor Content Precisely to Job Description:
+   - Update Experience and Project sections to match job description language.
+   - **Every bullet point must include a strong, measurable, quantifiable result** (e.g., 25% efficiency gain, $10K cost saving, 30% onboarding time reduction).
+   - Each bullet must clearly follow the Accomplishment → Action → Quantified Result format.
+   - If no specific number is naturally available, reasonably estimate a realistic figure based on industry standards (e.g., 15%, 25%, $5K). No bullet point should omit a measurable result under any circumstances.
+   - If a bullet point describes improvements like "enhanced", "improved", or "optimized" without an obvious metric, assume and insert a reasonable estimated percentage (e.g., 15%–30%) reflecting typical industry improvements.
+   - Highlight technologies and skills mentioned in the job description seamlessly.
+- Tailor the Technical Skills section to include only the skills, technologies, and tools that are either:
+   - Explicitly mentioned in the job description, or
+   - Clearly implied by the job responsibilities.
+- Remove unrelated or extra skills that are not relevant to the specific job posting.
+
+6. ATS-Friendly Optimization:
+   - Embed keywords and skills from the job description meaningfully into each section.
+
+7. Professionalism, Consistency, and Accuracy:
+   - Keep the resume concise, professional, and highly relevant to the target job.
 
 Output Requirements:
-Return only the finalized, complete LaTeX resume document. Do not include explanations, markdown, or commentary. Verify that the output is valid LaTeX and fully intact (no truncation).
+- Output only the LaTeX resume document after the first Company/Role line.
+- No additional explanation, markdown, or commentary.
+- Ensure the LaTeX is complete and valid without truncation.
 
 LaTeX Resume:
 ${latex}
@@ -81,7 +72,7 @@ ${latex}
 Job Description:
 ${jobDescription}
 
-Continue generating until the entire LaTeX resume is complete without missing any sections.
+Continue generating until the full LaTeX document is complete.
 `,
         },
       ],

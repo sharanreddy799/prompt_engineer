@@ -12,8 +12,6 @@ export const authOptions = {
   },
   callbacks: {
     async session({ session, token }) {
-      console.log("🔥 Session callback fired");
-
       session.user.id = token.sub;
       return session;
     },

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
@@ -9,6 +9,7 @@ export default function HistoryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [history, setHistory] = useState([]);
+  const cacheRef = useRef(null); // Cache reference
 
   useEffect(() => {
     if (status === "loading") return;
@@ -20,12 +21,18 @@ export default function HistoryPage() {
   useEffect(() => {
     const fetchHistory = async () => {
       try {
+        if (cacheRef.current) {
+          setHistory(cacheRef.current);
+          return;
+        }
         const response = await axios.get("/api/history");
         setHistory(response.data);
+        cacheRef.current = response.data;
       } catch (error) {
         console.error("Error fetching history:", error);
       }
     };
+
     if (status === "authenticated") {
       fetchHistory();
     }
@@ -33,7 +40,14 @@ export default function HistoryPage() {
 
   if (status === "loading") {
     return (
-      <div className="text-white text-center mt-20 text-2xl">Loading...</div>
+      <div className="flex flex-col items-center justify-center min-h-screen bg-[#005582]">
+        <div className="text-white text-2xl font-bold mb-2">Loading</div>
+        <div className="flex space-x-2">
+          <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
+          <div className="w-3 h-3 bg-white rounded-full animate-bounce delay-150"></div>
+          <div className="w-3 h-3 bg-white rounded-full animate-bounce delay-300"></div>
+        </div>
+      </div>
     );
   }
 
@@ -49,7 +63,7 @@ export default function HistoryPage() {
               <th className="py-3 px-6 text-left">Company</th>
               <th className="py-3 px-6 text-left">Role</th>
               <th className="py-3 px-6 text-left">Created At</th>
-              <th className="py-3 px-6 text-center">Action</th>
+              <th className="py-3 px-6 text-center">Url</th>
             </tr>
           </thead>
           <tbody className="text-gray-600 text-sm font-light">

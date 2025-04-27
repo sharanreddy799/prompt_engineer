@@ -111,7 +111,8 @@ export default function DashboardPage() {
     }
     try {
       await axios.post("/api/save", {
-        userId: session.user.email,
+        userEmail: session.user.email,
+        userName: session.user.name,
         company: company,
         role: role,
         latexOutput: output,

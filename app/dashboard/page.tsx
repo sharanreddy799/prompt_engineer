@@ -97,9 +97,15 @@ export default function DashboardPage() {
   };
 
   const handleSaveToDb = async () => {
-    if (!output.trim() || !company || !role || !session?.user?.email) {
+    if (
+      !output.trim() ||
+      !company ||
+      !role ||
+      !session?.user?.email ||
+      !session?.user?.name
+    ) {
       alert(
-        "Missing company, role, output, or user session. Cannot save to database."
+        "Missing company, role, output, or user session details. Cannot save to database."
       );
       return;
     }

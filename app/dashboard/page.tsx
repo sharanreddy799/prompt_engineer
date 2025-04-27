@@ -94,15 +94,22 @@ export default function Home() {
   };
 
   const handleSaveToDb = async () => {
-    if (!output.trim() || !company || !role || !session?.user?.email) {
+    if (
+      !output.trim() ||
+      !company ||
+      !role ||
+      !session?.user?.email ||
+      !session?.user?.name
+    ) {
       alert(
-        "Missing company, role, output, or user session. Cannot save to database."
+        "Missing company, role, output, or user session details. Cannot save to database."
       );
       return;
     }
     try {
       await axios.post("/api/save", {
-        userId: session.user.email, // Send the logged-in user's email
+        userEmail: session.user.email, // Pass email
+        userName: session.user.name, // Pass name
         company: company,
         role: role,
         latexOutput: output,

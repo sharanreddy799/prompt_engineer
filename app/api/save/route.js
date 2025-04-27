@@ -9,12 +9,20 @@ const pool = new Pool({
   },
 });
 
-// Create the table if it does not exist
-async function ensureTableExists() {
+// Create the tables if they do not exist
+async function ensureTablesExist() {
+  await pool.query(`
+    CREATE TABLE IF NOT EXISTS users (
+      id SERIAL PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      name TEXT
+    )
+  `);
+
   await pool.query(`
     CREATE TABLE IF NOT EXISTS resume_db (
       id SERIAL PRIMARY KEY,
-      user_id TEXT NOT NULL,
+      user_id INTEGER NOT NULL REFERENCES users(id),
       company TEXT NOT NULL,
       role TEXT NOT NULL,
       latex_output TEXT NOT NULL,
@@ -26,17 +34,41 @@ async function ensureTableExists() {
 
 export async function POST(req) {
   try {
-    const { company, role, latexOutput, userId } = await req.json();
+    const { company, role, latexOutput, userEmail, userName } =
+      await req.json();
 
-    if (!company || !role || !latexOutput || !userId) {
+    if (!company || !role || !latexOutput || !userEmail) {
       return NextResponse.json(
-        { error: "Missing company, role, latex output, or user ID" },
+        { error: "Missing required fields" },
         { status: 400 }
       );
     }
 
-    await ensureTableExists();
+    await ensureTablesExist();
 
+    // Insert user if not exists (without image)
+    await pool.query(
+      `INSERT INTO users (email, name)
+       VALUES ($1, $2)
+       ON CONFLICT (email) DO NOTHING`,
+      [userEmail, userName]
+    );
+
+    // Fetch user ID
+    const { rows } = await pool.query(`SELECT id FROM users WHERE email = $1`, [
+      userEmail,
+    ]);
+
+    const userId = rows[0]?.id;
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: "User ID fetch failed" },
+        { status: 500 }
+      );
+    }
+
+    // Save resume linked to user ID
     await pool.query(
       `INSERT INTO resume_db (user_id, company, role, latex_output, latex_file_url)
        VALUES ($1, $2, $3, $4, NULL)`,

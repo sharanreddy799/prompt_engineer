@@ -5,30 +5,32 @@ import { Pool } from "pg";
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false, // Required for Neon.tech SSL
+    rejectUnauthorized: false,
   },
 });
 
 // Create the table if it does not exist
 async function ensureTableExists() {
   await pool.query(`
-    CREATE TABLE IF NOT EXISTS job_hunt (
-      job_description TEXT NOT NULL,
+    CREATE TABLE IF NOT EXISTS resume_db (
+      id SERIAL PRIMARY KEY,
+      user_id TEXT NOT NULL,
       company TEXT NOT NULL,
+      role TEXT NOT NULL,
       latex_output TEXT NOT NULL,
-      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      PRIMARY KEY (job_description, company)
+      latex_file_url TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     )
   `);
 }
 
 export async function POST(req) {
   try {
-    const { jobDescription, company, latexOutput } = await req.json();
+    const { company, role, latexOutput, userId } = await req.json();
 
-    if (!jobDescription || !company || !latexOutput) {
+    if (!company || !role || !latexOutput || !userId) {
       return NextResponse.json(
-        { error: "Missing job description, company, or LaTeX output" },
+        { error: "Missing company, role, latex output, or user ID" },
         { status: 400 }
       );
     }
@@ -36,12 +38,9 @@ export async function POST(req) {
     await ensureTableExists();
 
     await pool.query(
-      `INSERT INTO job_hunt (job_description, company, latex_output)
-       VALUES ($1, $2, $3)
-       ON CONFLICT (job_description, company)
-       DO UPDATE SET latex_output = EXCLUDED.latex_output,
-                     created_at = CURRENT_TIMESTAMP`,
-      [jobDescription, company, latexOutput]
+      `INSERT INTO resume_db (user_id, company, role, latex_output, latex_file_url)
+       VALUES ($1, $2, $3, $4, NULL)`,
+      [userId, company, role, latexOutput]
     );
 
     return NextResponse.json({ message: "Saved successfully" });

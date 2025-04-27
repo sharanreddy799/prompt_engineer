@@ -16,9 +16,18 @@ export async function GET() {
     return new Response("Unauthorized", { status: 401 });
   }
 
-  const userId = session.user.email; // always use email for matching
-
   try {
+    const { rows: userRows } = await pool.query(
+      `SELECT id FROM users WHERE email = $1`,
+      [session.user.email]
+    );
+
+    if (userRows.length === 0) {
+      return new Response("User not found", { status: 404 });
+    }
+
+    const userId = userRows[0].id;
+
     const { rows } = await pool.query(
       `SELECT id, company, role, latex_output, latex_file_url, created_at FROM resume_db WHERE user_id = $1 ORDER BY created_at DESC`,
       [userId]
@@ -39,11 +48,21 @@ export async function DELETE(req) {
 
   try {
     const { id } = await req.json();
-    const userId = session.user.email;
 
     if (!id) {
       return new Response("Missing ID for deletion", { status: 400 });
     }
+
+    const { rows: userRows } = await pool.query(
+      `SELECT id FROM users WHERE email = $1`,
+      [session.user.email]
+    );
+
+    if (userRows.length === 0) {
+      return new Response("User not found", { status: 404 });
+    }
+
+    const userId = userRows[0].id;
 
     const result = await pool.query(
       `DELETE FROM resume_db WHERE id = $1 AND user_id = $2 RETURNING *`,

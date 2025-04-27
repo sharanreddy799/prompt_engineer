@@ -34,8 +34,10 @@ async function ensureTablesExist() {
 
 export async function POST(req) {
   try {
-    const { company, role, latexOutput, userEmail, userName } =
-      await req.json();
+    const body = await req.json();
+    console.log("Received body at /api/save:", body);
+
+    const { company, role, latexOutput, userEmail, userName } = body;
 
     if (!company || !role || !latexOutput || !userEmail) {
       return NextResponse.json(

@@ -29,3 +29,34 @@ export async function GET() {
     return new Response("Internal Server Error", { status: 500 });
   }
 }
+
+export async function DELETE(req) {
+  const session = await getServerSession(authOptions);
+
+  if (!session) {
+    return new Response("Unauthorized", { status: 401 });
+  }
+
+  try {
+    const { id } = await req.json();
+    const userId = session.user.email;
+
+    if (!id) {
+      return new Response("Missing ID for deletion", { status: 400 });
+    }
+
+    const result = await pool.query(
+      `DELETE FROM resume_db WHERE id = $1 AND user_id = $2 RETURNING *`,
+      [id, userId]
+    );
+
+    if (result.rowCount === 0) {
+      return new Response("Record not found or unauthorized", { status: 404 });
+    }
+
+    return new Response("Record deleted successfully", { status: 200 });
+  } catch (error) {
+    console.error("Database delete error:", error);
+    return new Response("Internal Server Error", { status: 500 });
+  }
+}

@@ -94,12 +94,15 @@ export default function Home() {
   };
 
   const handleSaveToDb = async () => {
-    if (!output.trim() || !company || !role) {
-      alert("Missing company, role, or output. Cannot save to database.");
+    if (!output.trim() || !company || !role || !session?.user?.email) {
+      alert(
+        "Missing company, role, output, or user session. Cannot save to database."
+      );
       return;
     }
     try {
       await axios.post("/api/save", {
+        userId: session.user.email, // Send the logged-in user's email
         company: company,
         role: role,
         latexOutput: output,
@@ -127,6 +130,12 @@ export default function Home() {
           <span className="text-white font-semibold">
             {session?.user?.name || "Guest"}
           </span>
+          <button
+            onClick={() => (window.location.href = "/history")}
+            className="bg-white text-[#005582] px-4 py-2 rounded-md font-semibold hover:bg-gray-100 shadow"
+          >
+            History
+          </button>
           <button
             onClick={() => signOut({ callbackUrl: "/auth" })}
             className="bg-white text-[#005582] px-4 py-2 rounded-md font-semibold hover:bg-gray-100 shadow"

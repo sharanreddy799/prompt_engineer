@@ -26,22 +26,21 @@ async function ensureTableExists() {
 
 export async function POST(req) {
   try {
-    const { company, role, latexOutput } = await req.json();
+    const { company, role, latexOutput, userId } = await req.json();
 
-    if (!company || !role || !latexOutput) {
+    if (!company || !role || !latexOutput || !userId) {
       return NextResponse.json(
-        { error: "Missing company, role, or LaTeX output" },
+        { error: "Missing company, role, latex output, or user ID" },
         { status: 400 }
       );
     }
 
     await ensureTableExists();
 
-    // For now, hardcoding user_id as "test-user"
     await pool.query(
       `INSERT INTO resume_db (user_id, company, role, latex_output, latex_file_url)
        VALUES ($1, $2, $3, $4, NULL)`,
-      ["test-user", company, role, latexOutput]
+      [userId, company, role, latexOutput]
     );
 
     return NextResponse.json({ message: "Saved successfully" });

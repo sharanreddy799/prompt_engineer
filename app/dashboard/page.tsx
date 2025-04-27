@@ -100,8 +100,8 @@ export default function Home() {
     }
     try {
       await axios.post("/api/save", {
-        jobDescription: role,
         company: company,
+        role: role,
         latexOutput: output,
       });
       alert("Saved to database successfully!");

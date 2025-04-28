@@ -36,6 +36,13 @@ This project is a **full-stack, production-grade** web application that helps us
 /app
   /auth        # Authentication routes
   /dashboard   # Main Dashboard page (Latex & Job Input, Output)
+    /components
+      Header.tsx
+      Footer.tsx
+      LatexInput.tsx
+      JobDescriptionInput.tsx
+      ActionButtons.tsx
+      OutputArea.tsx
   /history     # History page (past resumes)
   /api
     /auth      # NextAuth route
@@ -45,13 +52,7 @@ This project is a **full-stack, production-grade** web application that helps us
   /lib
     authOptions.js   # Centralized NextAuth config
     gcsUpload.ts     # Google Cloud Storage helper
-  /components
-    Header.tsx
-    Footer.tsx
-    LatexInput.tsx
-    JobDescriptionInput.tsx
-    ActionButtons.tsx
-    OutputArea.tsx
+ 
 ```
 
 ---
@@ -61,7 +62,7 @@ This project is a **full-stack, production-grade** web application that helps us
 ### 1. Clone Repository
 
 ```bash
-git clone https://github.com/yourusername/latexformatter.git
+git clone https://github.com/yourusername/prompt_engineer.git
 cd latexformatter
 ```
 

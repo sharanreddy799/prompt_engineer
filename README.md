@@ -1,36 +1,182 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# ✨ LatexFormatter - AI-powered LaTeX Resume Tailor
 
-## Getting Started
+This project is a **full-stack, production-grade** web application that helps users **refine and tailor** their LaTeX resumes based on a job description — powered by **Next.js 15**, **NextAuth.js**, **PostgreSQL**, **Google Cloud Storage**, and **OpenAI Groq API**.
 
-First, run the development server:
+---
+
+## 🌟 Features
+
+- 🖋️ AI-powered generation of customized LaTeX resumes.
+- 🔐 Google OAuth 2.0 Authentication using NextAuth.js.
+- 🗄️ Cloud storage of generated `.tex` files in Google Cloud Storage (GCS).
+- 🧠 User-specific history: view past resume generations.
+- 📝 Clean, modularized frontend with TailwindCSS.
+- 🌩️ Hosted on Vercel with environment-based configuration.
+- ⚡ Full backend API using Next.js App Router.
+
+---
+
+## 🚀 Tech Stack
+
+| Category        | Tools/Frameworks                         |
+|-----------------|-------------------------------------------|
+| Frontend        | Next.js 15 App Router, Tailwind CSS       |
+| Backend         | Next.js Server Actions, API Routes       |
+| Authentication  | NextAuth.js with Google OAuth2.0         |
+| Database        | PostgreSQL (user management + resumes)   |
+| Cloud Storage   | Google Cloud Storage (public `.tex` links)|
+| AI Integration  | Groq API (OpenAI compatible endpoint)     |
+| Hosting         | Vercel                                   |
+
+---
+
+## 📂 Project Structure
+
+```bash
+/app
+  /auth        # Authentication routes
+  /dashboard   # Main Dashboard page (Latex & Job Input, Output)
+  /history     # History page (past resumes)
+  /api
+    /auth      # NextAuth route
+    /save      # Save resume and user record
+    /history   # Fetch saved resumes
+    /groq      # AI generation
+  /lib
+    authOptions.js   # Centralized NextAuth config
+    gcsUpload.ts     # Google Cloud Storage helper
+  /components
+    Header.tsx
+    Footer.tsx
+    LatexInput.tsx
+    JobDescriptionInput.tsx
+    ActionButtons.tsx
+    OutputArea.tsx
+```
+
+---
+
+## 🛠 Setup Instructions
+
+### 1. Clone Repository
+
+```bash
+git clone https://github.com/yourusername/latexformatter.git
+cd latexformatter
+```
+
+### 2. Install Dependencies
+
+```bash
+npm install
+```
+
+### 3. Configure Environment Variables
+
+Create a `.env.local` file:
+
+```bash
+NEXTAUTH_URL=http://localhost:3000
+NEXT_PUBLIC_NEXTAUTH_URL=http://localhost:3000
+
+GOOGLE_CLIENT_ID=your-google-client-id
+GOOGLE_CLIENT_SECRET=your-google-client-secret
+
+NEXTAUTH_SECRET=your-nextauth-secret
+
+DATABASE_URL=your-postgres-connection-url
+
+GCS_PROJECT_ID=your-gcp-project-id
+GCS_CLIENT_EMAIL=your-gcp-client-email
+GCS_PRIVATE_KEY="your-gcp-private-key"
+GCS_BUCKET_NAME=your-gcp-bucket-name
+```
+
+---
+
+### 4. Setup Google Cloud Storage (GCS)
+
+- Create a **GCS Bucket** (ensure uniform bucket access is enabled).
+- Create a **Service Account** with `Storage Object Admin` role.
+- Use the service account credentials in environment variables.
+- Make uploaded objects public if you want public download links.
+
+### 5. Setup Google OAuth Credentials
+
+- Go to [Google Cloud Console → OAuth Consent Screen → Credentials](https://console.cloud.google.com/apis/credentials).
+- Create OAuth client credentials.
+- Set **Authorized Redirect URIs**:
+
+```text
+http://localhost:3000/api/auth/callback/google
+https://your-production-url.vercel.app/api/auth/callback/google
+```
+
+### 6. Database Schema
+
+Tables needed:
+
+```sql
+CREATE TABLE users (
+  id SERIAL PRIMARY KEY,
+  email VARCHAR(255) UNIQUE NOT NULL,
+  name VARCHAR(255) NOT NULL
+);
+
+CREATE TABLE resume_db (
+  id SERIAL PRIMARY KEY,
+  user_id INTEGER REFERENCES users(id),
+  company TEXT NOT NULL,
+  role TEXT NOT NULL,
+  latex_output TEXT NOT NULL,
+  latex_file_url TEXT,
+  created_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### 7. Running Locally
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Available at [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+---
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## 🧠 Core Workflows
 
-## Learn More
+1. **User signs in** using Google OAuth.
+2. **User pastes LaTeX** template and **Job description**.
+3. **AI tailors the resume** to match the job.
+4. **User saves the tailored resume** to database and GCS.
+5. **View past resumes** in History tab linked to user.
 
-To learn more about Next.js, take a look at the following resources:
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 📈 Future Enhancements
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Full PDF generation from `.tex` files.
+- Live resume preview and download.
+- Resume versioning and comparison tools.
+- Scoring system based on job relevance.
+- Enhanced UI with Skeleton Loaders.
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## 👨‍💻 Author
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Built with ❤️ by **Sai Sharan Karam**.
+
+If you like this project, please ⭐ the repo and share!
+
+---
+
+## 🎉 License
+
+This project is licensed under the **MIT License**.
+
+---
+
+> "Empowering resumes for the future, one LaTeX line at a time." ✨
+

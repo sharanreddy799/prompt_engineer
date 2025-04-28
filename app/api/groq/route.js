@@ -76,7 +76,7 @@ Continue generating until the full LaTeX document is complete.
 `,
         },
       ],
-      temperature: 1,
+      temperature: 0.7,
       max_completion_tokens: 40096,
       top_p: 1,
       stream: true,
@@ -85,11 +85,26 @@ Continue generating until the full LaTeX document is complete.
 
     const stream = new ReadableStream({
       async start(controller) {
-        for await (const chunk of completion) {
-          const content = chunk.choices[0]?.delta?.content || "";
-          controller.enqueue(new TextEncoder().encode(content));
+        const decoder = new TextDecoder();
+        let buffer = "";
+        try {
+          for await (const chunk of completion) {
+            const contentPart = chunk.choices[0]?.delta?.content || "";
+            buffer += contentPart;
+
+            // Stream data to client
+            controller.enqueue(new TextEncoder().encode(contentPart));
+          }
+        } catch (streamError) {
+          console.error("Stream reading error:", streamError);
+          controller.error(streamError);
+        } finally {
+          // Final flushing if any buffer left (precautionary)
+          if (buffer.length > 0) {
+            controller.enqueue(new TextEncoder().encode(buffer));
+          }
+          controller.close();
         }
-        controller.close();
       },
     });
 

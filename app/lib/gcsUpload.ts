@@ -3,7 +3,10 @@ import { v4 as uuidv4 } from "uuid";
 
 const storage = new Storage({
   projectId: process.env.GCP_PROJECT_ID,
-  credentials: JSON.parse(process.env.GCP_CREDENTIALS_JSON || "{}"),
+  credentials: {
+    client_email: process.env.GCP_CLIENT_EMAIL,
+    private_key: process.env.GCP_PRIVATE_KEY?.replace(/\\n/g, "\n"), // Fix escaped newlines
+  },
 });
 
 const bucketName = process.env.GCP_BUCKET_NAME || "";
@@ -22,12 +25,19 @@ export async function uploadLatexToGCS(
   const bucket = storage.bucket(bucketName);
   const file = bucket.file(fileName);
 
-  await file.save(fileBuffer, {
-    metadata: { contentType: "application/x-latex" },
-    resumable: false,
-  });
+  try {
+    await file.save(fileBuffer, {
+      metadata: { contentType: "application/x-latex" },
+      resumable: false,
+    });
 
-  await file.makePublic();
+    // Note: Not making file public due to Uniform Bucket-Level Access enabled on the bucket.
 
-  return `https://storage.googleapis.com/${bucketName}/${fileName}`;
+    console.log(`✅ Successfully uploaded LaTeX file to GCS: ${fileName}`);
+
+    return `https://storage.googleapis.com/${bucketName}/${fileName}`;
+  } catch (error) {
+    console.error("❌ GCS Upload Failed:", error);
+    throw new Error("Failed to upload LaTeX file to Google Cloud Storage.");
+  }
 }

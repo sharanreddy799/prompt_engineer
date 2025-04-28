@@ -1,3 +1,4 @@
+import { uploadLatexToGCS } from "@/lib/gcsUpload";
 import { NextRequest, NextResponse } from "next/server";
 import { Pool } from "pg";
 
@@ -70,11 +71,14 @@ export async function POST(req) {
       );
     }
 
-    // Save resume linked to user ID
+    // Upload LaTeX to GCS and get file URL
+    const latexFileUrl = await uploadLatexToGCS(latexOutput, userId.toString());
+
+    // Save resume linked to user ID with latex_file_url
     await pool.query(
       `INSERT INTO resume_db (user_id, company, role, latex_output, latex_file_url)
-       VALUES ($1, $2, $3, $4, NULL)`,
-      [userId, company, role, latexOutput]
+       VALUES ($1, $2, $3, $4, $5)`,
+      [userId, company, role, latexOutput, latexFileUrl]
     );
 
     return NextResponse.json({ message: "Saved successfully" });

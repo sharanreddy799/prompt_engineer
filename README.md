@@ -167,7 +167,7 @@ Available at [http://localhost:3000](http://localhost:3000)
 
 ## 👨‍💻 Author
 
-Built with ❤️ by **Sai Sharan Karam**.
+Built with ❤️ by **Sai Sharan Karam** Using Intellect and ChatGPT.
 
 If you like this project, please ⭐ the repo and share!
 

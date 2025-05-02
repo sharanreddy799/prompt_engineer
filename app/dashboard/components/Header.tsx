@@ -21,7 +21,7 @@ function Header() {
         >
           History
         </button>
-        {session?.user?.name && <p className="text-sm">{session.user.name}</p>}
+        {session?.user?.name && <p className="text-sm p-4 ">{session.user.name}</p>}
         <button
           onClick={() => signOut()}
           className="px-4 py-2 bg-red-600 rounded-md hover:bg-red-700 transition"

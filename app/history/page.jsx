@@ -140,9 +140,6 @@ export default function HistoryPage() {
     <div className="min-h-screen bg-gradient-to-br from-[#005582] to-[#003d5f]">
       <Header />
       <div className="container mx-auto px-4 py-8">
-        <h1 className="text-3xl font-extrabold text-white text-center mb-8">
-          Resume History
-        </h1>
         <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 overflow-hidden">
           <div className="overflow-x-auto">
             <table className="min-w-full table-auto">

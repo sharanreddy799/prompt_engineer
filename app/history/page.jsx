@@ -4,11 +4,13 @@ import { useEffect, useRef, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import axios from "axios";
+import HistorySkeleton from "./components/HistorySkeleton";
 
 export default function HistoryPage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const [history, setHistory] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
   const cacheRef = useRef(null); // Cache reference
 
   useEffect(() => {
@@ -23,6 +25,7 @@ export default function HistoryPage() {
       try {
         if (cacheRef.current) {
           setHistory(cacheRef.current);
+          setIsLoading(false);
           return;
         }
         const response = await axios.get("/api/history");
@@ -30,6 +33,8 @@ export default function HistoryPage() {
         cacheRef.current = response.data;
       } catch (error) {
         console.error("Error fetching history:", error);
+      } finally {
+        setIsLoading(false);
       }
     };
 
@@ -38,17 +43,8 @@ export default function HistoryPage() {
     }
   }, [status]);
 
-  if (status === "loading") {
-    return (
-      <div className="flex flex-col items-center justify-center min-h-screen bg-[#005582]">
-        <div className="text-white text-2xl font-bold mb-2">Loading</div>
-        <div className="flex space-x-2">
-          <div className="w-3 h-3 bg-white rounded-full animate-bounce"></div>
-          <div className="w-3 h-3 bg-white rounded-full animate-bounce delay-150"></div>
-          <div className="w-3 h-3 bg-white rounded-full animate-bounce delay-300"></div>
-        </div>
-      </div>
-    );
+  if (status === "loading" || isLoading) {
+    return <HistorySkeleton />;
   }
 
   return (

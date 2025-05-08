@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect } from "react";
 import { useSession, signOut } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 
 interface ProfileDropdownProps {
   userName: string;
@@ -10,6 +10,7 @@ interface ProfileDropdownProps {
 
 const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ userName }) => {
   const router = useRouter();
+  const pathname = usePathname();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
 
@@ -54,15 +55,27 @@ const ProfileDropdown: React.FC<ProfileDropdownProps> = ({ userName }) => {
 
       {isDropdownOpen && (
         <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
-          <button
-            onClick={() => {
-              router.push("/history");
-              setIsDropdownOpen(false);
-            }}
-            className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
-          >
-            History
-          </button>
+          {pathname === "/history" ? (
+            <button
+              onClick={() => {
+                router.push("/dashboard");
+                setIsDropdownOpen(false);
+              }}
+              className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+            >
+              Dashboard
+            </button>
+          ) : (
+            <button
+              onClick={() => {
+                router.push("/history");
+                setIsDropdownOpen(false);
+              }}
+              className="w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100 transition"
+            >
+              History
+            </button>
+          )}
           <button
             onClick={() => signOut({ callbackUrl: "/auth" })}
             className="w-full text-left px-4 py-2 text-red-600 hover:bg-gray-100 transition"

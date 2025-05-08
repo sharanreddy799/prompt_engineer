@@ -23,7 +23,7 @@ export async function GET() {
     );
 
     if (userRows.length === 0) {
-      return new Response("User not found", { status: 404 });
+      return Response.json([]);
     }
 
     const userId = userRows[0].id;

@@ -24,7 +24,21 @@ export default function DashboardPage() {
     setLoading(true);
     setOutput("");
 
+    // Validate inputs before making the request
+    if (!latexInput.trim()) {
+      setOutput("Error: Please enter a LaTeX template");
+      setLoading(false);
+      return;
+    }
+
+    if (!jobDescriptionInput.trim()) {
+      setOutput("Error: Please enter a job description");
+      setLoading(false);
+      return;
+    }
+
     try {
+      console.log("Sending request to Groq API...");
       const res = await fetch("/api/groq", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -34,6 +48,12 @@ export default function DashboardPage() {
         }),
       });
 
+      if (!res.ok) {
+        const errorData = await res.json();
+        console.error("API Error:", errorData);
+        throw new Error(errorData.message || "Failed to generate output");
+      }
+
       if (!res.body) {
         throw new Error("Streaming not supported");
       }
@@ -42,66 +62,102 @@ export default function DashboardPage() {
       const decoder = new TextDecoder();
       let result = "";
       let buffer = "";
+      let inThinkBlock = false;
 
       while (true) {
         const { done, value } = await reader.read();
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
+        console.log("Received chunk:", buffer);
 
-        buffer = buffer.replace(/<think>[\s\S]*?<\/think>/gi, (match) => {
-          console.log("Filtered Explanation:", match);
-          return "";
-        });
+        // Process the buffer line by line
+        const lines = buffer.split("\n");
+        buffer = lines.pop() || ""; // Keep the last incomplete line in the buffer
 
-        const lastOpenIndex = buffer.lastIndexOf("<think>");
-        const lastCloseIndex = buffer.lastIndexOf("</think>");
+        for (const line of lines) {
+          const trimmedLine = line.trim();
 
-        if (lastOpenIndex > lastCloseIndex) {
-          result += buffer.slice(0, lastOpenIndex);
-          buffer = buffer.slice(lastOpenIndex);
-        } else {
-          result += buffer;
-          buffer = "";
+          // Skip think blocks
+          if (trimmedLine.includes("<think>")) {
+            inThinkBlock = true;
+            continue;
+          }
+          if (trimmedLine.includes("</think>")) {
+            inThinkBlock = false;
+            continue;
+          }
+          if (inThinkBlock) {
+            continue;
+          }
+
+          // Skip empty lines
+          if (trimmedLine) {
+            result += line + "\n";
+          }
         }
       }
 
-      result = result.replace(/^```latex\s*|```$/gim, "").trim();
-
-      // Extract first line and remaining content
-      const [firstLineRaw, ...latexLines] = result.split("\n");
-      const firstLine = firstLineRaw.trim();
-
-      // More robust parsing of company and role
-      const companyRolePattern = /^Company:\s*([^,]+),\s*Role:\s*(.+)$/i;
-      const match = firstLine.match(companyRolePattern);
-
-      if (match && match[1] && match[2]) {
-        const company = match[1].trim();
-        const role = match[2].trim();
-
-        if (company && role) {
-          const latexContent = latexLines.join("\n").trim();
-          setOutput(latexContent);
-          setCompany(company);
-          setRole(role);
-        } else {
-          console.error("Company or role is empty after extraction");
-          setOutput(
-            "Error: Failed to extract company and role. Please check the job description format."
-          );
+      // Process any remaining buffer
+      if (buffer.trim()) {
+        const trimmedBuffer = buffer.trim();
+        if (
+          !trimmedBuffer.includes("<think>") &&
+          !trimmedBuffer.includes("</think>")
+        ) {
+          result += buffer;
         }
+      }
+
+      // Clean up the result
+      result = result.trim();
+      console.log("Final result:", result);
+
+      if (!result) {
+        throw new Error("No output received from the API");
+      }
+
+      // Split into lines and process
+      const lines = result.split("\n");
+
+      // Find the first line that contains company and role
+      let company = "";
+      let role = "";
+      let latexContent = "";
+      let foundCompanyRole = false;
+
+      for (const line of lines) {
+        const trimmedLine = line.trim();
+        if (!foundCompanyRole) {
+          const companyRolePattern = /^Company:\s*([^,]+),\s*Role:\s*(.+)$/i;
+          const match = trimmedLine.match(companyRolePattern);
+          if (match && match[1] && match[2]) {
+            company = match[1].trim();
+            role = match[2].trim();
+            foundCompanyRole = true;
+            continue; // Skip this line in the LaTeX output
+          }
+        }
+        // Skip empty lines
+        if (trimmedLine) {
+          latexContent += line + "\n";
+        }
+      }
+
+      // Clean up the LaTeX content
+      latexContent = latexContent.trim();
+
+      if (company && role) {
+        setOutput(latexContent);
+        setCompany(company);
+        setRole(role);
       } else {
-        console.error("Could not extract company and role properly!", {
-          firstLine,
-          pattern: companyRolePattern,
-          match,
-        });
-        setOutput(
-          "Error: Failed to extract company and role. Please ensure the job description includes a clear company name and role title."
-        );
+        // If we couldn't extract company/role, just use the cleaned output
+        console.log("Could not extract company and role, using cleaned output");
+        setOutput(latexContent);
       }
     } catch (error) {
+      console.error("Error generating output:", error);
       if (error instanceof Error) {
         setOutput(`Error: ${error.message}`);
       } else {
@@ -146,49 +202,115 @@ export default function DashboardPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 min-h-screen bg-[#005582]">
+    <div className="min-h-screen bg-gradient-to-br from-[#005582] to-[#003d5f]">
       <Header />
 
-      <div className="flex flex-col gap-4 h-full">
-        <div className="flex flex-col md:flex-row gap-4">
-          <div className="flex flex-col w-full md:w-1/2 px-8">
-            <p className="text-2xl font-bold text-white mb-4 text-center tracking-wide">
-              Latex Format
-            </p>
-            <LatexInput latexInput={latexInput} setLatexInput={setLatexInput} />
+      <div className="container mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+          {/* LaTeX Input Section */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center tracking-wide">
+              LaTeX Template
+            </h2>
+            <div className="relative">
+              <LatexInput
+                latexInput={latexInput}
+                setLatexInput={setLatexInput}
+              />
+              <div className="absolute top-2 right-2 text-white/60 text-sm">
+                {latexInput.length} characters
+              </div>
+            </div>
           </div>
 
-          <div className="flex flex-col w-full md:w-1/2 px-8">
-            <p className="text-2xl font-bold text-white mb-4 text-center tracking-wide">
+          {/* Job Description Section */}
+          <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+            <h2 className="text-2xl font-bold text-white mb-6 text-center tracking-wide">
               Job Description
-            </p>
-            <JobDescriptionInput
-              jobDescription={jobDescriptionInput}
-              setJobDescription={setJobDescriptionInput}
-            />
+            </h2>
+            <div className="relative">
+              <JobDescriptionInput
+                jobDescription={jobDescriptionInput}
+                setJobDescription={setJobDescriptionInput}
+              />
+              <div className="absolute top-2 right-2 text-white/60 text-sm">
+                {jobDescriptionInput.length} characters
+              </div>
+            </div>
           </div>
         </div>
 
-        <ActionButtons
-          handleGenerateOutput={generateOutput}
-          handleSaveToDb={handleSaveToDb}
-        />
-      </div>
+        {/* Action Buttons */}
+        <div className="flex justify-center gap-4 mb-8">
+          <button
+            onClick={generateOutput}
+            disabled={loading}
+            className="px-8 py-3 bg-gradient-to-r from-[#009688] to-[#00796b] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? (
+              <span className="flex items-center gap-2">
+                <svg className="animate-spin h-5 w-5" viewBox="0 0 24 24">
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                    fill="none"
+                  />
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  />
+                </svg>
+                Generating...
+              </span>
+            ) : (
+              "Generate Resume"
+            )}
+          </button>
+          <button
+            onClick={handleSaveToDb}
+            className="px-8 py-3 bg-gradient-to-r from-[#2196f3] to-[#1976d2] text-white rounded-xl font-semibold shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all duration-200"
+          >
+            Save to History
+          </button>
+        </div>
 
-      <div className="flex flex-col gap-1 px-8">
-        <p className="text-2xl font-bold text-white mb-4 text-center tracking-wide">
-          Generated Latex
-        </p>
-        {loading && (
-          <div className="text-white text-center font-semibold">
-            Generating...
+        {/* Output Section */}
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20">
+          <div className="flex justify-between items-center mb-6">
+            <h2 className="text-2xl font-bold text-white tracking-wide">
+              Generated LaTeX
+            </h2>
+            <button
+              onClick={copyToClipboard}
+              className="px-4 py-2 bg-white/20 text-white rounded-lg hover:bg-white/30 transition-colors duration-200 flex items-center gap-2"
+            >
+              <svg
+                className="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3"
+                />
+              </svg>
+              Copy
+            </button>
           </div>
-        )}
-        <OutputArea
-          output={output}
-          setOutput={setOutput}
-          handleCopyOutput={copyToClipboard}
-        />
+          <OutputArea
+            output={output}
+            setOutput={setOutput}
+            handleCopyOutput={copyToClipboard}
+          />
+        </div>
       </div>
 
       <Footer />

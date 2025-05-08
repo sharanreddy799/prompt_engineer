@@ -1,4 +1,7 @@
+import { NextResponse } from "next/server";
 import { Groq } from "groq-sdk";
+import { getServerSession } from "next-auth/next";
+import { authOptions } from "@/lib/authOptions";
 
 // Validation functions
 function validateJobDescription(jobDescription) {
@@ -121,156 +124,152 @@ function validateLatex(latex) {
   return { isValid: true };
 }
 
+const groq = new Groq({
+  apiKey: process.env.GROQ_API_KEY,
+});
+
 export async function POST(req) {
-  const { latex, jobDescription } = await req.json();
-
-  // Validate inputs
-  const latexValidation = validateLatex(latex);
-  if (!latexValidation.isValid) {
-    return new Response(JSON.stringify({ error: latexValidation.error }), {
-      status: 400,
-    });
-  }
-
-  const jobDescriptionValidation = validateJobDescription(jobDescription);
-  if (!jobDescriptionValidation.isValid) {
-    return new Response(
-      JSON.stringify({ error: jobDescriptionValidation.error }),
-      { status: 400 }
-    );
-  }
-
-  const groq = new Groq({ apiKey: process.env.GROQ_API_KEY });
-
   try {
+    // Validate session
+    const session = await getServerSession(authOptions);
+    if (!session) {
+      console.error("Unauthorized: No valid session found");
+      return new NextResponse("Unauthorized", { status: 401 });
+    }
+
+    // Parse and validate request body
+    let latex, jobDescription;
+    try {
+      const body = await req.json();
+      latex = body.latex;
+      jobDescription = body.jobDescription;
+
+      console.log("Received request with:", {
+        latexLength: latex?.length,
+        jobDescriptionLength: jobDescription?.length,
+      });
+    } catch (parseError) {
+      console.error("Failed to parse request body:", parseError);
+      return new NextResponse("Invalid request body", { status: 400 });
+    }
+
+    // Validate required fields
+    if (!latex || !jobDescription) {
+      console.error("Missing required fields:", {
+        latex: !!latex,
+        jobDescription: !!jobDescription,
+      });
+      return new NextResponse("Missing required fields", { status: 400 });
+    }
+
+    const prompt = `You are an expert LaTeX resume formatter. Your task is to modify the provided LaTeX resume template to match the job description while maintaining the original structure and formatting.
+
+IMPORTANT RULES:
+1. DO NOT duplicate any content
+2. DO NOT add any new sections
+3. DO NOT modify the LaTeX structure or commands
+4. ONLY modify the content within the existing sections
+5. Keep all formatting, spacing, and layout exactly as in the template
+6. Ensure all metrics and achievements are preserved
+7. Maintain the exact same number of bullet points per section
+8. Keep all technical skills and their formatting intact
+9. DO NOT repeat the LaTeX template
+10. DO NOT include any explanations or think tags
+11. DO NOT wrap the output in code block markers (no \`\`\`latex or \`\`\`)
+12. You may fabricate relevant projects that align with the job requirements
+
+TEMPLATE:
+${latex}
+
+JOB DESCRIPTION:
+${jobDescription}
+
+TASK:
+1. Analyze the job description for key requirements and skills
+2. Modify ONLY the content within the existing sections to better match the job
+3. Keep all LaTeX commands, structure, and formatting exactly as is
+4. Ensure metrics and achievements are preserved and relevant
+5. Maintain the exact same number of bullet points
+6. Keep all technical skills and their formatting intact
+7. Create or modify projects to showcase relevant skills and experience
+8. Ensure all fabricated projects are realistic and align with the job requirements
+
+OUTPUT FORMAT:
+1. First line must be: "Company: [COMPANY_NAME], Role: [ROLE_NAME]"
+2. Then provide the complete LaTeX code with modifications
+3. Do not include any explanations or additional text
+4. Do not duplicate any content
+5. Keep the exact same structure as the template
+6. Do not repeat the LaTeX template
+7. Do not wrap the output in code block markers
+
+QUALITY CHECKS:
+1. Verify no content is duplicated
+2. Confirm all LaTeX commands are preserved
+3. Ensure metrics and achievements are maintained
+4. Check that the number of bullet points matches the template
+5. Validate that technical skills formatting is unchanged
+6. Ensure the LaTeX template is not repeated
+7. Verify no code block markers are present
+8. Ensure all projects are relevant to the job requirements`;
+
+    console.log("Sending request to Groq API...");
     const completion = await groq.chat.completions.create({
-      model: "deepseek-r1-distill-llama-70b",
       messages: [
         {
           role: "system",
-          content: `You are an expert AI specializing in revising LaTeX resumes based on job descriptions. Your task is to analyze the provided LaTeX resume template and job description, then generate a tailored, ATS-optimized one-page LaTeX resume.
-
-CRITICAL OUTPUT FORMAT:
-1. Your FIRST LINE must EXACTLY match this format:
-   "Company: [EXACT_COMPANY_NAME], Role: [EXACT_ROLE_TITLE]"
-   - No additional text before or after this line
-   - No quotes around the values
-   - No extra spaces or special characters
-   - Company and Role must be exact matches from the job description
-
-2. After the first line, output the complete LaTeX resume
-   - No additional text or explanations
-   - Start with the LaTeX document immediately
-
-Key Responsibilities:
-1. Extract and output the company name and role title from the job description
-2. Generate a complete, valid LaTeX resume following all specified rules
-3. Ensure all content is relevant and optimized for the target role
-
-Strict Rules to Follow:
-1. Output Format:
-   - First line: "Company: [Company Name], Role: [Role Title]"
-   - Followed by complete LaTeX resume
-   - No additional text or explanations
-
-2. LaTeX Structure:
-   - Preserve ALL LaTeX commands, environments, and formatting
-   - Maintain exact indentation and line breaks
-   - Keep all commented sections (lines starting with %)
-   - Ensure document is complete and valid
-
-3. Content Organization:
-   - Entry-level roles: Education → Experience → Projects → Skills
-   - Experienced roles: Experience → Projects → Education → Skills
-   - Each section must be properly formatted with LaTeX commands
-
-4. Experience and Projects:
-   - Every bullet point MUST follow: "Accomplishment → Action → Quantified Result"
-   - REQUIRED metrics for each bullet point:
-     * If specific number exists: Use exact number
-     * If improvement mentioned: Add 15-30% metric
-     * If no metric: Add reasonable industry-standard metric
-   - NO bullet points without metrics allowed
-   - Use strong action verbs and job-specific terminology
-
-5. Skills Section:
-   - Include ONLY skills mentioned in job description
-   - Include skills implied by job responsibilities
-   - Remove irrelevant skills
-   - Format as bullet points or comma-separated list
-
-6. ATS Optimization:
-   - Use exact keywords from job description
-   - Maintain natural language flow
-   - Avoid keyword stuffing
-   - Ensure readability
-
-7. Quality Checks:
-   - Verify all LaTeX commands are valid
-   - Check for proper section ordering
-   - Ensure all bullet points have metrics
-   - Confirm skills match job requirements
-   - Validate document completeness
-
-Remember:
-- Output ONLY the first line and LaTeX content
-- No explanations or markdown
-- Ensure complete document generation
-- Follow ALL rules strictly`,
+          content:
+            "You are an expert LaTeX resume formatter. Your task is to modify the provided LaTeX resume template to match the job description while maintaining the original structure and formatting. You may fabricate relevant projects that align with the job requirements. Do not duplicate any content, repeat the template, or wrap the output in code block markers.",
         },
         {
           role: "user",
-          content: `LaTeX Resume Template:
-${latex}
-
-Job Description:
-${jobDescription}
-
-Generate a complete, tailored LaTeX resume following all rules. Remember to start with the exact format: "Company: [Company Name], Role: [Role Title]"`,
+          content: prompt,
         },
       ],
+      model: "deepseek-r1-distill-llama-70b",
       temperature: 0.7,
-      max_completion_tokens: 40096,
+      max_tokens: 32768,
       top_p: 1,
       stream: true,
-      stop: null,
     });
 
+    console.log("Creating response stream...");
     const stream = new ReadableStream({
       async start(controller) {
-        const decoder = new TextDecoder();
-        let buffer = "";
         try {
           for await (const chunk of completion) {
-            const contentPart = chunk.choices[0]?.delta?.content || "";
-            buffer += contentPart;
-
-            // Stream data to client
-            controller.enqueue(new TextEncoder().encode(contentPart));
-          }
-        } catch (streamError) {
-          console.error("Stream reading error:", streamError);
-          controller.error(streamError);
-        } finally {
-          // Final flushing if any buffer left (precautionary)
-          if (buffer.length > 0) {
-            controller.enqueue(new TextEncoder().encode(buffer));
+            const content = chunk.choices[0]?.delta?.content || "";
+            if (content) {
+              controller.enqueue(new TextEncoder().encode(content));
+            }
           }
           controller.close();
+        } catch (streamError) {
+          console.error("Streaming error:", streamError);
+          controller.error(streamError);
         }
       },
     });
 
-    return new Response(stream, {
+    return new NextResponse(stream, {
       headers: {
         "Content-Type": "text/plain; charset=utf-8",
-        "Transfer-Encoding": "chunked",
       },
     });
   } catch (error) {
-    console.error("Groq API error:", error);
-    return new Response(JSON.stringify({ error: error.message }), {
-      status: 500,
-    });
+    console.error("Error in Groq API:", error);
+    return new NextResponse(
+      JSON.stringify({
+        error: "Internal Server Error",
+        message: error.message,
+        type: error.name,
+      }),
+      {
+        status: 500,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      }
+    );
   }
 }

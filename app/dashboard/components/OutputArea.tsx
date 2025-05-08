@@ -8,19 +8,18 @@ interface OutputAreaProps {
 
 function OutputArea({ output, setOutput, handleCopyOutput }: OutputAreaProps) {
   return (
-    <div className="w-full flex flex-col items-center">
+    <div className="w-full">
       <textarea
         value={output}
         onChange={(e) => setOutput(e.target.value)}
-        className="w-3/5 min-h-[600px] p-4 rounded-md border-2 border-gray-300 bg-white focus:outline-none focus:ring-2 focus:ring-green-400"
+        className="w-full min-h-[400px] p-4 rounded-xl border-2 border-white/20 bg-white/5 text-white placeholder-white/50 focus:outline-none focus:ring-2 focus:ring-[#009688] focus:border-transparent transition-all duration-200 font-mono text-sm"
         placeholder="Generated LaTeX output will appear here..."
+        style={{
+          backdropFilter: "blur(10px)",
+          boxShadow:
+            "0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)",
+        }}
       />
-      <button
-        onClick={handleCopyOutput}
-        className="mt-4 px-6 py-2 bg-purple-600 rounded-md hover:bg-purple-700 text-white transition"
-      >
-        Copy Output
-      </button>
     </div>
   );
 }

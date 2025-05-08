@@ -13,7 +13,7 @@ export default function HistoryPage() {
   const router = useRouter();
   const [history, setHistory] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
-  const cacheRef = useRef(null); // Cache reference
+  const cacheRef = useRef(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [selectedRecord, setSelectedRecord] = useState(null);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -100,8 +100,8 @@ export default function HistoryPage() {
 
   const formatFileName = (entry) => {
     const date = new Date(entry.created_at);
-    const formattedDate = date.toISOString().split("T")[0]; // YYYY-MM-DD
-    const formattedTime = date.toTimeString().split(" ")[0].replace(/:/g, "-"); // HH-MM-SS
+    const formattedDate = date.toISOString().split("T")[0];
+    const formattedTime = date.toTimeString().split(" ")[0].replace(/:/g, "-");
     const company = entry.company.replace(/[^a-z0-9]/gi, "_").toLowerCase();
     const role = entry.role.replace(/[^a-z0-9]/gi, "_").toLowerCase();
 
@@ -110,7 +110,6 @@ export default function HistoryPage() {
 
   const handleDownload = async (entry) => {
     try {
-      // First, fetch the file content through our API
       const response = await axios.get(
         `/api/history/download?url=${encodeURIComponent(entry.latex_file_url)}`,
         {
@@ -118,22 +117,13 @@ export default function HistoryPage() {
         }
       );
 
-      // Create a blob from the response data
       const blob = new Blob([response.data], { type: "application/x-latex" });
-
-      // Create a temporary URL for the blob
       const url = window.URL.createObjectURL(blob);
-
-      // Create a temporary link element
       const link = document.createElement("a");
       link.href = url;
       link.download = formatFileName(entry);
-
-      // Append to body, click, and remove
       document.body.appendChild(link);
       link.click();
-
-      // Clean up
       document.body.removeChild(link);
       window.URL.revokeObjectURL(url);
     } catch (error) {
@@ -147,76 +137,116 @@ export default function HistoryPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#005582]">
+    <div className="min-h-screen bg-gradient-to-br from-[#005582] to-[#003d5f]">
       <Header />
-      <div className="p-8">
+      <div className="container mx-auto px-4 py-8">
         <h1 className="text-3xl font-extrabold text-white text-center mb-8">
           Resume History
         </h1>
-        <div className="overflow-x-auto bg-white rounded-lg shadow max-w-7xl mx-auto">
-          <table className="min-w-full table-auto">
-            <thead>
-              <tr className="bg-gray-200 text-gray-700 uppercase text-sm leading-normal">
-                <th className="py-3 px-6 text-left">Company</th>
-                <th className="py-3 px-6 text-left">Role</th>
-                <th className="py-3 px-6 text-left">Created At</th>
-                <th className="py-3 px-6 text-center">Url</th>
-                <th className="py-3 px-6 text-center">Actions</th>
-              </tr>
-            </thead>
-            <tbody className="text-gray-600 text-sm font-light">
-              {history.length === 0 ? (
-                <tr>
-                  <td colSpan="5" className="py-10 text-center text-gray-400">
-                    No records found.
-                  </td>
+        <div className="bg-white/10 backdrop-blur-lg rounded-2xl p-6 shadow-xl border border-white/20 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="min-w-full table-auto">
+              <thead>
+                <tr className="bg-white/5 text-white uppercase text-sm leading-normal">
+                  <th className="py-4 px-6 text-left">Company</th>
+                  <th className="py-4 px-6 text-left">Role</th>
+                  <th className="py-4 px-6 text-left">Created At</th>
+                  <th className="py-4 px-6 text-center">File</th>
+                  <th className="py-4 px-6 text-center">Actions</th>
                 </tr>
-              ) : (
-                history.map((entry) => (
-                  <tr
-                    key={entry.id}
-                    className="border-b border-gray-200 hover:bg-gray-100"
-                  >
-                    <td className="py-3 px-6 text-left">{entry.company}</td>
-                    <td className="py-3 px-6 text-left">{entry.role}</td>
-                    <td className="py-3 px-6 text-left">
-                      {new Date(entry.created_at).toLocaleString()}
-                    </td>
-                    <td className="py-3 px-6 text-center max-w-xs truncate">
-                      {entry.latex_file_url ? (
-                        <button
-                          onClick={() => handleDownload(entry)}
-                          className="bg-[#009688] text-white px-4 py-2 rounded hover:bg-[#00695c] text-sm font-semibold transition-colors"
-                          title={entry.latex_file_url}
-                        >
-                          Download .tex
-                        </button>
-                      ) : (
-                        <span className="text-gray-400 italic">Pending</span>
-                      )}
-                    </td>
-                    <td className="py-3 px-6 text-center">
-                      <div className="flex justify-center space-x-2">
-                        <button
-                          onClick={() => handleEdit(entry)}
-                          className="px-3 py-1 text-sm bg-blue-500 text-white rounded hover:bg-blue-600 transition-colors"
-                        >
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(entry.id)}
-                          disabled={isDeleting}
-                          className="px-3 py-1 text-sm bg-red-500 text-white rounded hover:bg-red-600 disabled:opacity-50 transition-colors"
-                        >
-                          Delete
-                        </button>
-                      </div>
+              </thead>
+              <tbody className="text-white/80 text-sm font-light">
+                {history.length === 0 ? (
+                  <tr>
+                    <td colSpan="5" className="py-10 text-center text-white/60">
+                      No records found.
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
+                ) : (
+                  history.map((entry) => (
+                    <tr
+                      key={entry.id}
+                      className="border-b border-white/10 hover:bg-white/5 transition-colors duration-200"
+                    >
+                      <td className="py-4 px-6 text-left">{entry.company}</td>
+                      <td className="py-4 px-6 text-left">{entry.role}</td>
+                      <td className="py-4 px-6 text-left">
+                        {new Date(entry.created_at).toLocaleString()}
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        {entry.latex_file_url ? (
+                          <button
+                            onClick={() => handleDownload(entry)}
+                            className="px-4 py-2 bg-gradient-to-r from-[#009688] to-[#00796b] text-white rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 mx-auto"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+                              />
+                            </svg>
+                            Download .tex
+                          </button>
+                        ) : (
+                          <span className="text-white/40 italic">Pending</span>
+                        )}
+                      </td>
+                      <td className="py-4 px-6 text-center">
+                        <div className="flex justify-center space-x-3">
+                          <button
+                            onClick={() => handleEdit(entry)}
+                            className="px-4 py-2 bg-gradient-to-r from-[#2196f3] to-[#1976d2] text-white rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                              />
+                            </svg>
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => handleDelete(entry.id)}
+                            disabled={isDeleting}
+                            className="px-4 py-2 bg-gradient-to-r from-[#f44336] to-[#d32f2f] text-white rounded-lg hover:shadow-lg transform hover:-translate-y-0.5 transition-all duration-200 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                          >
+                            <svg
+                              className="w-5 h-5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth="2"
+                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                              />
+                            </svg>
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
         </div>
       </div>
 

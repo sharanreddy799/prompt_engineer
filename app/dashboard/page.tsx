@@ -68,21 +68,37 @@ export default function DashboardPage() {
 
       result = result.replace(/^```latex\s*|```$/gim, "").trim();
 
+      // Extract first line and remaining content
       const [firstLineRaw, ...latexLines] = result.split("\n");
       const firstLine = firstLineRaw.trim();
-      const match = firstLine.match(/Company:\s*(.*?),\s*Role:\s*(.*)/);
-      const company = match ? match[1].trim() : "";
-      const role = match ? match[2].trim() : "";
 
-      if (company && role) {
-        const latexContent = latexLines.join("\n").trim();
-        setOutput(latexContent);
-        setCompany(company);
-        setRole(role);
+      // More robust parsing of company and role
+      const companyRolePattern = /^Company:\s*([^,]+),\s*Role:\s*(.+)$/i;
+      const match = firstLine.match(companyRolePattern);
+
+      if (match && match[1] && match[2]) {
+        const company = match[1].trim();
+        const role = match[2].trim();
+
+        if (company && role) {
+          const latexContent = latexLines.join("\n").trim();
+          setOutput(latexContent);
+          setCompany(company);
+          setRole(role);
+        } else {
+          console.error("Company or role is empty after extraction");
+          setOutput(
+            "Error: Failed to extract company and role. Please check the job description format."
+          );
+        }
       } else {
-        console.error("Could not extract company and role properly!");
+        console.error("Could not extract company and role properly!", {
+          firstLine,
+          pattern: companyRolePattern,
+          match,
+        });
         setOutput(
-          "Error: Failed to extract company and role. Check input format."
+          "Error: Failed to extract company and role. Please ensure the job description includes a clear company name and role title."
         );
       }
     } catch (error) {
